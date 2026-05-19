@@ -1,0 +1,49 @@
+name: Deploy React App
+
+on:
+  push:
+    branches:
+      - main
+      - development
+      - testing
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        working-directory: ./front-end
+        run: npm install
+
+      - name: Build React App
+        working-directory: ./front-end
+        run: npm run build
+
+      - name: Set Deploy Folder
+        run: |
+          if [ "${GITHUB_REF##*/}" = "main" ]; then
+            echo "DEPLOY_DIR=production" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF##*/}" = "development" ]; then
+            echo "DEPLOY_DIR=development" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF##*/}" = "testing" ]; then
+            echo "DEPLOY_DIR=testing" >> $GITHUB_ENV
+          fi
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./front-end/build
+          destination_dir: ${{ env.DEPLOY_DIR }}
