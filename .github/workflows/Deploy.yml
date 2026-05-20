@@ -13,25 +13,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # =====================================
+      # Checkout Repository
+      # =====================================
+
       - name: Checkout Project
         uses: actions/checkout@v4
+
+      # =====================================
+      # Setup Node.js
+      # =====================================
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
+      # =====================================
+      # Install Dependencies
+      # =====================================
+
       - name: Install Dependencies
         working-directory: ./front-end
         run: npm install
+
+      # =====================================
+      # Build React Vite App
+      # =====================================
 
       - name: Build React App
         working-directory: ./front-end
         run: npm run build
 
-      # =========================
-      # Production Deployment
-      # =========================
+      # =====================================
+      # Deploy Production
+      # =====================================
 
       - name: Deploy Production
         uses: peaceiris/actions-gh-pages@v4
@@ -42,9 +58,9 @@ jobs:
           publish_dir: ./front-end/dist
           cname: prod.luvetha.xyz
 
-      # =========================
-      # Development Deployment
-      # =========================
+      # =====================================
+      # Deploy Development
+      # =====================================
 
       - name: Deploy Development
         uses: peaceiris/actions-gh-pages@v4
@@ -55,9 +71,9 @@ jobs:
           publish_dir: ./front-end/dist
           cname: devo.luvetha.xyz
 
-      # =========================
-      # Testing Deployment
-      # =========================
+      # =====================================
+      # Deploy Testing
+      # =====================================
 
       - name: Deploy Testing
         uses: peaceiris/actions-gh-pages@v4
