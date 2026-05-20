@@ -1,9 +1,11 @@
-name: Deploy Sri Kanchi Website
+name: Deploy React App
 
 on:
   push:
     branches:
       - main
+      - development
+      - testing
 
 permissions:
   contents: write
@@ -29,9 +31,20 @@ jobs:
         working-directory: ./front-end
         run: npm run build
 
+      - name: Set Deploy Folder
+        run: |
+          if [ "${GITHUB_REF##*/}" = "main" ]; then
+            echo "DEPLOY_DIR=Production" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF##*/}" = "development" ]; then
+            echo "DEPLOY_DIR=Development" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF##*/}" = "testing" ]; then
+            echo "DEPLOY_DIR=Testing" >> $GITHUB_ENV
+          fi
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./front-end/dist
+          destination_dir: ${{ env.DEPLOY_DIR }}
           cname: sri-kanchi.luvetha.xyz
