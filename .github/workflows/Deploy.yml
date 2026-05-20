@@ -52,7 +52,7 @@ jobs:
       - name: Deploy Production
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.GH_PAT }}
+          personal_token: ${{ secrets.GH_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 }}
           external_repository: sravya-kotha-lv/luvetha-prod
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
@@ -65,7 +65,7 @@ jobs:
       - name: Deploy Development
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.GH_PAT }}
+          personal_token: ${{ secrets.GH_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 }}
           external_repository: sravya-kotha-lv/luvetha-devo
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
@@ -78,7 +78,7 @@ jobs:
       - name: Deploy Testing
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.GH_PAT }}
+          personal_token: ${{ secrets.GH_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 }}
           external_repository: sravya-kotha-lv/luvetha-test
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
