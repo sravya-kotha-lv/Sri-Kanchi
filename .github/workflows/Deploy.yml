@@ -1,4 +1,4 @@
-name: Deploy React App
+name: Deploy All Environments
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Project
+      - name: Checkout source code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -21,16 +21,43 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Dependencies
+      - name: Install dependencies
         working-directory: ./front-end
         run: npm install
 
-      - name: Build React App
+      - name: Build React Vite app
         working-directory: ./front-end
         run: npm run build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Add production CNAME
+        run: echo "prod.luvetha.xyz" > ./front-end/dist/CNAME
+
+      - name: Deploy to Production
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          deploy_key: ${{ secrets.PAGES_DEPLOY_KEY }}
+          external_repository: YOUR_GITHUB_USERNAME/luvetha-prod
+          publish_branch: gh-pages
+          publish_dir: ./front-end/dist
+
+      - name: Add development CNAME
+        run: echo "devo.luvetha.xyz" > ./front-end/dist/CNAME
+
+      - name: Deploy to Development
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.PAGES_DEPLOY_KEY }}
+          external_repository: YOUR_GITHUB_USERNAME/luvetha-devo
+          publish_branch: gh-pages
+          publish_dir: ./front-end/dist
+
+      - name: Add testing CNAME
+        run: echo "test.luvetha.xyz" > ./front-end/dist/CNAME
+
+      - name: Deploy to Testing
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.PAGES_DEPLOY_KEY }}
+          external_repository: YOUR_GITHUB_USERNAME/luvetha-test
+          publish_branch: gh-pages
           publish_dir: ./front-end/dist
