@@ -1,8 +1,9 @@
-name: Deploy Branch Environments
+name: Deploy Environments
 
 on:
   push:
     branches:
+      - main
       - production
       - development
       - testing
@@ -31,8 +32,8 @@ jobs:
         working-directory: ./front-end
         run: npm run build
 
-      - name: Deploy Production Folder
-        if: github.ref == 'refs/heads/production'
+      - name: Deploy Production
+        if: github.ref == 'refs/heads/production' || github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -42,8 +43,8 @@ jobs:
           keep_files: true
           cname: luvetha.xyz
 
-      - name: Deploy Development Folder
-        if: github.ref == 'refs/heads/development'
+      - name: Deploy Development
+        if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -53,8 +54,8 @@ jobs:
           keep_files: true
           cname: luvetha.xyz
 
-      - name: Deploy Testing Folder
-        if: github.ref == 'refs/heads/testing'
+      - name: Deploy Testing
+        if: github.ref == 'refs/heads/testing' || github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
