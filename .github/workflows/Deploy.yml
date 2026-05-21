@@ -1,9 +1,11 @@
-name: Deploy All Environments
+name: Deploy Branch Environments
 
 on:
   push:
     branches:
-      - main
+      - production
+      - development
+      - testing
 
 permissions:
   contents: write
@@ -29,29 +31,35 @@ jobs:
         working-directory: ./front-end
         run: npm run build
 
-      - name: Deploy Production
+      - name: Deploy Production Folder
+        if: github.ref == 'refs/heads/production'
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.GH_PAT }}
-          external_repository: sravya-kotha-lv/luvetha-prod
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
-          cname: prod.luvetha.xyz
+          destination_dir: production
+          keep_files: true
+          cname: luvetha.xyz
 
-      - name: Deploy Development
+      - name: Deploy Development Folder
+        if: github.ref == 'refs/heads/development'
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.GH_PAT }}
-          external_repository: sravya-kotha-lv/luvetha-devo
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
-          cname: devo.luvetha.xyz
+          destination_dir: development
+          keep_files: true
+          cname: luvetha.xyz
 
-      - name: Deploy Testing
+      - name: Deploy Testing Folder
+        if: github.ref == 'refs/heads/testing'
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.GH_PAT }}
-          external_repository: sravya-kotha-lv/luvetha-test
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
-          cname: test.luvetha.xyz
+          destination_dir: testing
+          keep_files: true
+          cname: luvetha.xyz
