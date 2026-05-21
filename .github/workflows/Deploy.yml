@@ -9,11 +9,11 @@ permissions:
   contents: write
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Project
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -29,9 +29,12 @@ jobs:
         working-directory: ./front-end
         run: npm run build
 
-      - name: Check Build Output
+      - name: Verify Build Files
         run: ls -la ./front-end/dist
 
+      # ==========================
+      # PRODUCTION
+      # ==========================
       - name: Deploy Production
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -40,9 +43,10 @@ jobs:
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
           cname: prod.luvetha.xyz
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com
 
+      # ==========================
+      # DEVELOPMENT
+      # ==========================
       - name: Deploy Development
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -51,9 +55,10 @@ jobs:
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
           cname: devo.luvetha.xyz
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com
 
+      # ==========================
+      # TESTING
+      # ==========================
       - name: Deploy Testing
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -62,5 +67,3 @@ jobs:
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
           cname: test.luvetha.xyz
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com
