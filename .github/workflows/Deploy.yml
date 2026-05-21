@@ -13,72 +13,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # =====================================
-      # Checkout Repository
-      # =====================================
-
       - name: Checkout Project
         uses: actions/checkout@v4
 
-      # =====================================
-      # Setup Node.js
-      # =====================================
-
       - name: Setup Node.js
-        uses: actions/setup-node@v4 
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      # =====================================
-      # Install Dependencies
-      # =====================================
 
       - name: Install Dependencies
         working-directory: ./front-end
         run: npm install
 
-      # =====================================
-      # Build React Vite App
-      # =====================================
-
       - name: Build React App
         working-directory: ./front-end
         run: npm run build
 
-      # =====================================
-      # Deploy Production
-      # =====================================
-
       - name: Deploy Production
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.GH_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 }}
+          personal_token: ${{ secrets.GH_PAT }}
           external_repository: sravya-kotha-lv/luvetha-prod
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
           cname: prod.luvetha.xyz
 
-      # =====================================
-      # Deploy Development
-      # =====================================
-
       - name: Deploy Development
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.GH_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 }}
+          personal_token: ${{ secrets.GH_PAT }}
           external_repository: sravya-kotha-lv/luvetha-devo
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
           cname: devo.luvetha.xyz
 
-      # =====================================
-      # Deploy Testing
-      # =====================================
-
       - name: Deploy Testing
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.GH_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 }}
+          personal_token: ${{ secrets.GH_PAT }}
           external_repository: sravya-kotha-lv/luvetha-test
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
