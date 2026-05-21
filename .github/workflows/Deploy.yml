@@ -1,9 +1,11 @@
-name: Deploy All Environments
+name: Deploy Environments
 
 on:
   push:
     branches:
-      - main
+      - Production
+      - Development
+      - Testing
 
 permissions:
   contents: write
@@ -13,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Project
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -29,13 +31,8 @@ jobs:
         working-directory: ./front-end
         run: npm run build
 
-      - name: Verify Build Files
-        run: ls -la ./front-end/dist
-
-      # ==========================
-      # PRODUCTION
-      # ==========================
       - name: Deploy Production
+        if: github.ref == 'refs/heads/Production'
         uses: peaceiris/actions-gh-pages@v4
         with:
           personal_token: ${{ secrets.GH_PAT }}
@@ -44,10 +41,8 @@ jobs:
           publish_dir: ./front-end/dist
           cname: prod.luvetha.xyz
 
-      # ==========================
-      # DEVELOPMENT
-      # ==========================
       - name: Deploy Development
+        if: github.ref == 'refs/heads/Development'
         uses: peaceiris/actions-gh-pages@v4
         with:
           personal_token: ${{ secrets.GH_PAT }}
@@ -56,10 +51,8 @@ jobs:
           publish_dir: ./front-end/dist
           cname: devo.luvetha.xyz
 
-      # ==========================
-      # TESTING
-      # ==========================
       - name: Deploy Testing
+        if: github.ref == 'refs/heads/Testing'
         uses: peaceiris/actions-gh-pages@v4
         with:
           personal_token: ${{ secrets.GH_PAT }}
