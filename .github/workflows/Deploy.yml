@@ -39,9 +39,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./front-end/dist
-          destination_dir: production
           keep_files: true
-          cname: luvetha.xyz
+          cname: prod.luvetha.xyz
 
       - name: Deploy Development
         if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/main'
@@ -52,7 +51,6 @@ jobs:
           publish_dir: ./front-end/dist
           destination_dir: development
           keep_files: true
-          cname: luvetha.xyz
 
       - name: Deploy Testing
         if: github.ref == 'refs/heads/testing' || github.ref == 'refs/heads/main'
@@ -63,4 +61,3 @@ jobs:
           publish_dir: ./front-end/dist
           destination_dir: testing
           keep_files: true
-          cname: luvetha.xyz
