@@ -30,6 +30,8 @@ jobs:
 
       - name: Build React App
         working-directory: ./front-end
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
         run: npm run build
 
       - name: Deploy Production
