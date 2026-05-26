@@ -35,6 +35,7 @@ const startServer = async () => {
     });
 
     const PORT = process.env.PORT || 5000;
+    console.log(PORT);
 
     await app.listen({ port: PORT });
 
