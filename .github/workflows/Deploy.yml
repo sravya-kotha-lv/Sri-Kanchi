@@ -1,0 +1,62 @@
+name: Deploy Environments
+
+on:
+  push:
+    branches:
+      - dev
+      - test
+      - prod
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        working-directory: ./front-end
+        run: npm install
+
+      - name: Build React App
+        working-directory: ./front-end
+        run: npm run build
+
+      - name: Deploy Development
+        if: github.ref == 'refs/heads/dev'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./front-end/dist
+          destination_dir: dev
+          keep_files: true
+
+      - name: Deploy Testing
+        if: github.ref == 'refs/heads/test'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./front-end/dist
+          destination_dir: test
+          keep_files: true
+
+      - name: Deploy Production
+        if: github.ref == 'refs/heads/prod'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./front-end/dist
+          destination_dir: prod
+          keep_files: true
