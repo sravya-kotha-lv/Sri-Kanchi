@@ -6,15 +6,13 @@ on:
       - dev
       - test
       - prod
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Project
-        uses: actions/checkout@v4
-
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -30,33 +28,35 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           envs: DB_HOST,DB_USER,DB_PASSWORD,DB_NAME,JWT_SECRET,PORT
           script: |
+            set -e
+
             cd /var/www/your-project
 
             git fetch origin
             git checkout ${{ github.ref_name }}
-            git pull origin ${{ github.ref_name }}
+            git reset --hard origin/${{ github.ref_name }}
 
-            # FRONTEND
             cd front-end
             npm install
             npm run build
 
             if [ "${{ github.ref_name }}" = "dev" ]; then
+              sudo mkdir -p /var/www/html/dev
               sudo rm -rf /var/www/html/dev/*
               sudo cp -r dist/* /var/www/html/dev/
             elif [ "${{ github.ref_name }}" = "test" ]; then
+              sudo mkdir -p /var/www/html/test
               sudo rm -rf /var/www/html/test/*
               sudo cp -r dist/* /var/www/html/test/
             elif [ "${{ github.ref_name }}" = "prod" ]; then
+              sudo mkdir -p /var/www/html/prod
               sudo rm -rf /var/www/html/prod/*
               sudo cp -r dist/* /var/www/html/prod/
             fi
 
-            # BACKEND
             cd ../back-end
             npm install
 
-            # Create backend .env file
             cat > .env <<EOF
             DB_HOST=$DB_HOST
             DB_USER=$DB_USER
