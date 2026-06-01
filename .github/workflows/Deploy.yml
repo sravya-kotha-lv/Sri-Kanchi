@@ -7,9 +7,6 @@ on:
       - test
       - prod
 
-permissions:
-  contents: write
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -18,45 +15,46 @@ jobs:
       - name: Checkout Project
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          node-version: 20
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /var/www/your-project
 
-      - name: Install Dependencies
-        working-directory: ./front-end
-        run: npm install
+            git fetch origin
+            git checkout ${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
 
-      - name: Build React App
-        working-directory: ./front-end
-        run: npm run build
+            # FRONTEND
+            cd front-end
+            npm install
+            npm run build
 
-      - name: Deploy Development
-        if: github.ref == 'refs/heads/dev'
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./front-end/dist
-          destination_dir: dev
-          keep_files: true
+            if [ "${{ github.ref_name }}" = "dev" ]; then
+              sudo rm -rf /var/www/html/dev/*
+              sudo cp -r dist/* /var/www/html/dev/
+            elif [ "${{ github.ref_name }}" = "test" ]; then
+              sudo rm -rf /var/www/html/test/*
+              sudo cp -r dist/* /var/www/html/test/
+            elif [ "${{ github.ref_name }}" = "prod" ]; then
+              sudo rm -rf /var/www/html/prod/*
+              sudo cp -r dist/* /var/www/html/prod/
+            fi
 
-      - name: Deploy Testing
-        if: github.ref == 'refs/heads/test'
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./front-end/dist
-          destination_dir: test
-          keep_files: true
+            # BACKEND
+            cd ../back-end
+            npm install
 
-      - name: Deploy Production
-        if: github.ref == 'refs/heads/prod'
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./front-end/dist
-          destination_dir: prod
-          keep_files: true
+            if [ "${{ github.ref_name }}" = "dev" ]; then
+              pm2 restart backend-dev || pm2 start server.js --name backend-dev
+            elif [ "${{ github.ref_name }}" = "test" ]; then
+              pm2 restart backend-test || pm2 start server.js --name backend-test
+            elif [ "${{ github.ref_name }}" = "prod" ]; then
+              pm2 restart backend-prod || pm2 start server.js --name backend-prod
+            fi
+
+            pm2 save
+            sudo systemctl restart nginx
