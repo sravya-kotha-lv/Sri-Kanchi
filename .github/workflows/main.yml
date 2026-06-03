@@ -1,61 +1,76 @@
-- name: Deploy to Server
-  uses: appleboy/ssh-action@v1.0.3
-  with:
-    host: ${{ secrets.SSH_HOST }}
-    username: ${{ secrets.SSH_USER }}
-    key: ${{ secrets.SSH_KEY }}
-    port: 22
-    script: |
-      set -e
+name: Deploy to Server
 
-      BRANCH="${{ github.ref_name }}"
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - test
+      - prod
 
-      if [ "$BRANCH" = "main" ]; then
-        PORT="5000"
-        FRONTEND_DIR="/var/www/html/prod"
-        PM2_NAME="backend-prod"
-      elif [ "$BRANCH" = "dev" ]; then
-        PORT="5001"
-        FRONTEND_DIR="/var/www/html/dev"
-        PM2_NAME="backend-dev"
-      elif [ "$BRANCH" = "test" ]; then
-        PORT="5002"
-        FRONTEND_DIR="/var/www/html/test"
-        PM2_NAME="backend-test"
-      elif [ "$BRANCH" = "prod" ]; then
-        PORT="5000"
-        FRONTEND_DIR="/var/www/html/prod"
-        PM2_NAME="backend-prod"
-      fi
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-      cd /var/www/Sri-Kanchi
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          command_timeout: 10m
+          script: |
+            set -e
 
-      git fetch origin
-      git checkout "$BRANCH"
-      git reset --hard "origin/$BRANCH"
+            BRANCH="${{ github.ref_name }}"
 
-      cd front-end
-      npm install
-      npm run build
+            if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "prod" ]; then
+              PORT="5000"
+              FRONTEND_DIR="/var/www/html/prod"
+              PM2_NAME="backend-prod"
+            elif [ "$BRANCH" = "dev" ]; then
+              PORT="5001"
+              FRONTEND_DIR="/var/www/html/dev"
+              PM2_NAME="backend-dev"
+            elif [ "$BRANCH" = "test" ]; then
+              PORT="5002"
+              FRONTEND_DIR="/var/www/html/test"
+              PM2_NAME="backend-test"
+            else
+              echo "Invalid branch: $BRANCH"
+              exit 1
+            fi
 
-      sudo mkdir -p "$FRONTEND_DIR"
-      sudo rm -rf "$FRONTEND_DIR"/*
-      sudo cp -r dist/* "$FRONTEND_DIR"/
+            cd /var/www/Sri-Kanchi
 
-      cd ../back-end
-      npm install
+            git fetch origin
+            git checkout "$BRANCH"
+            git reset --hard "origin/$BRANCH"
 
-      cat > .env <<EOF
-      DB_HOST=${{ secrets.DB_HOST }}
-      DB_USER=${{ secrets.DB_USER }}
-      DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-      DB_NAME=${{ secrets.DB_NAME }}
-      JWT_SECRET=${{ secrets.JWT_SECRET }}
-      PORT=$PORT
-      EOF
+            cd front-end
+            npm install
+            npm run build
 
-      pm2 restart "$PM2_NAME" || pm2 start server.js --name "$PM2_NAME"
-      pm2 save
+            sudo mkdir -p "$FRONTEND_DIR"
+            sudo rm -rf "$FRONTEND_DIR"/*
+            sudo cp -r dist/* "$FRONTEND_DIR"/
 
-      sudo nginx -t
-      sudo systemctl restart nginx
+            cd ../back-end
+            npm install
+
+            cat > .env <<EOF
+            DB_HOST=${{ secrets.DB_HOST }}
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            PORT=$PORT
+            EOF
+
+            pm2 restart "$PM2_NAME" || pm2 start server.js --name "$PM2_NAME"
+            pm2 save
+
+            sudo nginx -t
+            sudo systemctl restart nginx
