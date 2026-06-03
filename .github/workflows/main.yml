@@ -16,70 +16,65 @@ jobs:
     steps:
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
-        env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          DEV_BACKEND_PORT: ${{ vars.DEV_BACKEND_PORT }}
-          TEST_BACKEND_PORT: ${{ vars.TEST_BACKEND_PORT }}
-          PROD_BACKEND_PORT: ${{ vars.PROD_BACKEND_PORT }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          envs: DB_HOST,DB_USER,DB_PASSWORD,DB_NAME,JWT_SECRET,DEV_BACKEND_PORT,TEST_BACKEND_PORT,PROD_BACKEND_PORT
+          port: 22
           script: |
             set -e
 
             BRANCH="${{ github.ref_name }}"
 
             if [ "$BRANCH" = "main" ]; then
-              BRANCH="prod"
+              ENV_NAME="prod"
+              PORT="${{ vars.PROD_BACKEND_PORT }}"
+              FRONTEND_DIR="/var/www/html/prod"
+              PM2_NAME="backend-prod"
+            elif [ "$BRANCH" = "dev" ]; then
+              ENV_NAME="dev"
+              PORT="${{ vars.DEV_BACKEND_PORT }}"
+              FRONTEND_DIR="/var/www/html/dev"
+              PM2_NAME="backend-dev"
+            elif [ "$BRANCH" = "test" ]; then
+              ENV_NAME="test"
+              PORT="${{ vars.TEST_BACKEND_PORT }}"
+              FRONTEND_DIR="/var/www/html/test"
+              PM2_NAME="backend-test"
+            elif [ "$BRANCH" = "prod" ]; then
+              ENV_NAME="prod"
+              PORT="${{ vars.PROD_BACKEND_PORT }}"
+              FRONTEND_DIR="/var/www/html/prod"
+              PM2_NAME="backend-prod"
             fi
 
             cd /var/www/Sri-Kanchi
 
             git fetch origin
-            git checkout ${{ github.ref_name }}
-            git reset --hard origin/${{ github.ref_name }}
+            git checkout "$BRANCH"
+            git reset --hard "origin/$BRANCH"
 
             cd front-end
             npm install
             npm run build
 
-            if [ "$BRANCH" = "dev" ]; then
-              PORT=$DEV_BACKEND_PORT
-              FRONTEND_DIR="/var/www/html/dev"
-              PM2_NAME="backend-dev"
-            elif [ "$BRANCH" = "test" ]; then
-              PORT=$TEST_BACKEND_PORT
-              FRONTEND_DIR="/var/www/html/test"
-              PM2_NAME="backend-test"
-            elif [ "$BRANCH" = "prod" ]; then
-              PORT=$PROD_BACKEND_PORT
-              FRONTEND_DIR="/var/www/html/prod"
-              PM2_NAME="backend-prod"
-            fi
-
-            sudo mkdir -p $FRONTEND_DIR
-            sudo rm -rf $FRONTEND_DIR/*
-            sudo cp -r dist/* $FRONTEND_DIR/
+            sudo mkdir -p "$FRONTEND_DIR"
+            sudo rm -rf "$FRONTEND_DIR"/*
+            sudo cp -r dist/* "$FRONTEND_DIR"/
 
             cd ../back-end
             npm install
 
             cat > .env <<EOF
-            DB_HOST=$DB_HOST
-            DB_USER=$DB_USER
-            DB_PASSWORD=$DB_PASSWORD
-            DB_NAME=$DB_NAME
-            JWT_SECRET=$JWT_SECRET
+            DB_HOST=${{ secrets.DB_HOST }}
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
             PORT=$PORT
             EOF
 
-            pm2 restart $PM2_NAME || pm2 start server.js --name $PM2_NAME
+            pm2 restart "$PM2_NAME" || pm2 start server.js --name "$PM2_NAME"
             pm2 save
 
             sudo nginx -t
