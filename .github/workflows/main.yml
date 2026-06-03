@@ -27,22 +27,18 @@ jobs:
             BRANCH="${{ github.ref_name }}"
 
             if [ "$BRANCH" = "main" ]; then
-              ENV_NAME="prod"
               PORT="${{ vars.PROD_BACKEND_PORT }}"
               FRONTEND_DIR="/var/www/html/prod"
               PM2_NAME="backend-prod"
             elif [ "$BRANCH" = "dev" ]; then
-              ENV_NAME="dev"
               PORT="${{ vars.DEV_BACKEND_PORT }}"
               FRONTEND_DIR="/var/www/html/dev"
               PM2_NAME="backend-dev"
             elif [ "$BRANCH" = "test" ]; then
-              ENV_NAME="test"
               PORT="${{ vars.TEST_BACKEND_PORT }}"
               FRONTEND_DIR="/var/www/html/test"
               PM2_NAME="backend-test"
             elif [ "$BRANCH" = "prod" ]; then
-              ENV_NAME="prod"
               PORT="${{ vars.PROD_BACKEND_PORT }}"
               FRONTEND_DIR="/var/www/html/prod"
               PM2_NAME="backend-prod"
