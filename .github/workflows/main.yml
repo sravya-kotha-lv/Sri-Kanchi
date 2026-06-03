@@ -1,77 +1,61 @@
-name: Deploy Environments
+- name: Deploy to Server
+  uses: appleboy/ssh-action@v1.0.3
+  with:
+    host: ${{ secrets.SSH_HOST }}
+    username: ${{ secrets.SSH_USER }}
+    key: ${{ secrets.SSH_KEY }}
+    port: 22
+    script: |
+      set -e
 
-on:
-  push:
-    branches:
-      - main
-      - dev
-      - test
-      - prod
-  workflow_dispatch:
+      BRANCH="${{ github.ref_name }}"
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+      if [ "$BRANCH" = "main" ]; then
+        PORT="5000"
+        FRONTEND_DIR="/var/www/html/prod"
+        PM2_NAME="backend-prod"
+      elif [ "$BRANCH" = "dev" ]; then
+        PORT="5001"
+        FRONTEND_DIR="/var/www/html/dev"
+        PM2_NAME="backend-dev"
+      elif [ "$BRANCH" = "test" ]; then
+        PORT="5002"
+        FRONTEND_DIR="/var/www/html/test"
+        PM2_NAME="backend-test"
+      elif [ "$BRANCH" = "prod" ]; then
+        PORT="5000"
+        FRONTEND_DIR="/var/www/html/prod"
+        PM2_NAME="backend-prod"
+      fi
 
-    steps:
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: 22
-          script: |
-            set -e
+      cd /var/www/Sri-Kanchi
 
-            BRANCH="${{ github.ref_name }}"
+      git fetch origin
+      git checkout "$BRANCH"
+      git reset --hard "origin/$BRANCH"
 
-            if [ "$BRANCH" = "main" ]; then
-              PORT="${{ vars.PROD_BACKEND_PORT }}"
-              FRONTEND_DIR="/var/www/html/prod"
-              PM2_NAME="backend-prod"
-            elif [ "$BRANCH" = "dev" ]; then
-              PORT="${{ vars.DEV_BACKEND_PORT }}"
-              FRONTEND_DIR="/var/www/html/dev"
-              PM2_NAME="backend-dev"
-            elif [ "$BRANCH" = "test" ]; then
-              PORT="${{ vars.TEST_BACKEND_PORT }}"
-              FRONTEND_DIR="/var/www/html/test"
-              PM2_NAME="backend-test"
-            elif [ "$BRANCH" = "prod" ]; then
-              PORT="${{ vars.PROD_BACKEND_PORT }}"
-              FRONTEND_DIR="/var/www/html/prod"
-              PM2_NAME="backend-prod"
-            fi
+      cd front-end
+      npm install
+      npm run build
 
-            cd /var/www/Sri-Kanchi
+      sudo mkdir -p "$FRONTEND_DIR"
+      sudo rm -rf "$FRONTEND_DIR"/*
+      sudo cp -r dist/* "$FRONTEND_DIR"/
 
-            git fetch origin
-            git checkout "$BRANCH"
-            git reset --hard "origin/$BRANCH"
+      cd ../back-end
+      npm install
 
-            cd front-end
-            npm install
-            npm run build
+      cat > .env <<EOF
+      DB_HOST=${{ secrets.DB_HOST }}
+      DB_USER=${{ secrets.DB_USER }}
+      DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+      DB_NAME=${{ secrets.DB_NAME }}
+      JWT_SECRET=${{ secrets.JWT_SECRET }}
+      PORT=$PORT
+      EOF
 
-            sudo mkdir -p "$FRONTEND_DIR"
-            sudo rm -rf "$FRONTEND_DIR"/*
-            sudo cp -r dist/* "$FRONTEND_DIR"/
+      pm2 restart "$PM2_NAME" || pm2 start server.js --name "$PM2_NAME"
+      pm2 save
 
-            cd ../back-end
-            npm install
-
-            cat > .env <<EOF
-            DB_HOST=${{ secrets.DB_HOST }}
-            DB_USER=${{ secrets.DB_USER }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            DB_NAME=${{ secrets.DB_NAME }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            PORT=$PORT
-            EOF
-
-            pm2 restart "$PM2_NAME" || pm2 start server.js --name "$PM2_NAME"
-            pm2 save
-
-            sudo nginx -t
-            sudo systemctl restart nginx
+      sudo nginx -t
+      sudo systemctl restart nginx
