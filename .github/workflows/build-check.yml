@@ -1,9 +1,11 @@
 name: Build Check
 
 on:
-  push:
   pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
-  npm-build:
-    uses: sravya-kotha-lv/reuse-yaml/.github/workflows/npm-build.yml@main
+  call-build:
+    uses: sravya-kotha-lv/reusable-yaml-/.github/workflows/npm-build.yml@main
