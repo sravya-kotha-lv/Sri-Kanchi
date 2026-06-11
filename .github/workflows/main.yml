@@ -1,4 +1,4 @@
-name: Deploy to Server
+name: CI CD Deploy to Server
 
 on:
   push:
@@ -7,10 +7,44 @@ on:
       - dev
       - test
       - prod
+  pull_request:
+    branches:
+      - main
+      - dev
+      - test
+      - prod
 
 jobs:
-  deploy:
+  build:
+    name: CI Build Check
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Frontend Install and Build
+        working-directory: front-end
+        run: |
+          npm install
+          npm run build
+
+      - name: Backend Install Check
+        working-directory: back-end
+        run: |
+          npm install
+
+  deploy:
+    name: CD Deploy to Server
+    runs-on: ubuntu-latest
+    needs: build
+
+    if: github.event_name == 'push'
 
     steps:
       - name: Deploy to Server
@@ -42,6 +76,9 @@ jobs:
               PROJECT_DIR="/var/www/testing/Sri-Kanchi"
               FRONTEND_DIR="/var/www/html/test"
               PM2_NAME="backend-test"
+            else
+              echo "Invalid branch: $BRANCH"
+              exit 1
             fi
 
             cd "$PROJECT_DIR"
