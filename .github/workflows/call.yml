@@ -1,0 +1,13 @@
+name: Build Check
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  call-build:
+    uses: Luvetha-Tech-Solutions/yaml-robot/.github/workflows/npm-build.yml@main
+    with:
+      frontend-directory: "./front-end"
+      backend-directory: "./back-end"
+      node-version: "20"
